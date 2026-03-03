@@ -1,4 +1,3 @@
-import os
 from flask import Flask, render_template_string
 
 app = Flask(__name__)
@@ -86,12 +85,6 @@ HTML = """
     </div>
 
     <div class="row">
-      <label for="voiceSelect">Voice:</label>
-      <select id="voiceSelect" style="min-width: 260px; max-width: 100%;"></select>
-      <button id="refreshVoicesBtn" type="button">Refresh Voices</button>
-    </div>
-
-    <div class="row">
       <input id="answerInput" type="number" min="0" max="500" placeholder="Enter number here" />
       <button id="checkBtn" type="button">Check Answer</button>
       <button id="nextBtn" type="button" style="display:none;">Next Number</button>
@@ -104,11 +97,9 @@ HTML = """
     let currentNumber = null;
     let roundFinished = false;
     let preferredVoice = null;
-    let cachedVoices = [];
     const messageEl = document.getElementById("message");
     const inputEl = document.getElementById("answerInput");
     const nextBtn = document.getElementById("nextBtn");
-    const voiceSelectEl = document.getElementById("voiceSelect");
 
     function pickPreferredVoice() {
       const voices = window.speechSynthesis.getVoices();
@@ -126,12 +117,14 @@ HTML = """
         "zira",
         "hazel"
       ];
+      const maleHints = ["male", "man", "ravi", "david", "mark", "alex"];
+
       const prioritizedFemaleIndianNames = ["heera", "aditi", "veena", "lekha", "priya"];
 
       const byNamePriority = voices.find((v) => {
         const name = v.name.toLowerCase();
         const lang = v.lang.toLowerCase();
-        return lang === "en-in" &&
+        return (lang === "en-in" || lang.startsWith("hi-in")) &&
           prioritizedFemaleIndianNames.some((n) => name.includes(n));
       });
       if (byNamePriority) return byNamePriority;
@@ -139,12 +132,9 @@ HTML = """
       const exactIndianFemale = voices.find((v) => {
         const name = v.name.toLowerCase();
         const lang = v.lang.toLowerCase();
-        return lang === "en-in" && femaleHints.some((h) => name.includes(h));
+        return (lang === "en-in" || lang.startsWith("hi-in")) && femaleHints.some((h) => name.includes(h));
       });
       if (exactIndianFemale) return exactIndianFemale;
-
-      const anyIndianEnglish = voices.find((v) => v.lang.toLowerCase() === "en-in");
-      if (anyIndianEnglish) return anyIndianEnglish;
 
       const femaleEnglish = voices.find((v) => {
         const name = v.name.toLowerCase();
@@ -153,46 +143,24 @@ HTML = """
       });
       if (femaleEnglish) return femaleEnglish;
 
-      return voices.find((v) => v.lang.toLowerCase().startsWith("en")) || voices[0];
-    }
-
-    function populateVoiceSelect() {
-      const voices = window.speechSynthesis.getVoices();
-      cachedVoices = voices;
-      voiceSelectEl.innerHTML = "";
-
-      if (!voices.length) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "No voices found yet";
-        voiceSelectEl.appendChild(opt);
-        return;
-      }
-
-      const recommended = pickPreferredVoice();
-      voices.forEach((voice, idx) => {
-        const opt = document.createElement("option");
-        opt.value = String(idx);
-        opt.textContent = `${voice.name} (${voice.lang})`;
-        if (recommended && voice.name === recommended.name && voice.lang === recommended.lang) {
-          opt.selected = true;
-        }
-        voiceSelectEl.appendChild(opt);
+      const indianVoice = voices.find((v) => {
+        const name = v.name.toLowerCase();
+        const lang = v.lang.toLowerCase();
+        const isIndian = lang === "en-in" || lang.startsWith("hi-in") || name.includes("india") || name.includes("hindi");
+        const looksMale = maleHints.some((h) => name.includes(h));
+        return isIndian && !looksMale;
       });
-    }
+      if (indianVoice) return indianVoice;
 
-    function getSelectedVoice() {
-      const idx = Number(voiceSelectEl.value);
-      if (Number.isInteger(idx) && cachedVoices[idx]) return cachedVoices[idx];
-      return pickPreferredVoice();
+      return voices.find((v) => v.lang.toLowerCase().startsWith("en")) || voices[0];
     }
 
     function speak(text) {
       window.speechSynthesis.cancel();
-      preferredVoice = getSelectedVoice();
+      if (!preferredVoice) preferredVoice = pickPreferredVoice();
       const utter = new SpeechSynthesisUtterance(text);
       if (preferredVoice) utter.voice = preferredVoice;
-      utter.lang = "en-IN";
+      utter.lang = preferredVoice ? preferredVoice.lang : "en-IN";
       utter.rate = 0.7;
       utter.pitch = 1.0;
       if (preferredVoice) {
@@ -202,10 +170,8 @@ HTML = """
     }
 
     window.speechSynthesis.onvoiceschanged = () => {
-      populateVoiceSelect();
+      preferredVoice = pickPreferredVoice();
     };
-    document.getElementById("refreshVoicesBtn").addEventListener("click", populateVoiceSelect);
-    populateVoiceSelect();
 
     function nextRound() {
       currentNumber = Math.floor(Math.random() * 501);
@@ -278,5 +244,4 @@ def home() -> str:
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
