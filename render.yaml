@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: athu-number-app
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn test:app
+    plan: free
