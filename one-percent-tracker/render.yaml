@@ -1,0 +1,23 @@
+# Render Blueprint (optional). You can also configure these settings manually in
+# the Render dashboard when creating the Web Service.
+#
+# NOTE: For Render to auto-detect this Blueprint it must live at the REPOSITORY
+# ROOT. Since this app is in a subfolder, the simplest path is the manual
+# dashboard setup described in README.md. This file documents the exact settings.
+services:
+  - type: web
+    name: one-percent-tracker
+    runtime: node
+    rootDir: one-percent-tracker
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.11.0
+      - key: APP_PASSWORD
+        sync: false # set your password in the dashboard
+      - key: TURSO_DATABASE_URL
+        sync: false # from: turso db show <name> --url
+      - key: TURSO_AUTH_TOKEN
+        sync: false # from: turso db tokens create <name>
