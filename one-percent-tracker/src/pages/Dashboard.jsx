@@ -15,6 +15,7 @@ import { Card, Stat, ProgressBar, SectionTitle, pct } from '../components/ui.jsx
 export default function Dashboard({ habits }) {
   const now = new Date()
   const [logs, setLogs] = useState([])
+  const [todos, setTodos] = useState([])
 
   const week = useMemo(() => weekDays(startOfWeek(now)), []) // eslint-disable-line
   const [mDays, mStart, mEnd] = useMemo(() => monthDays(now), []) // eslint-disable-line
@@ -23,8 +24,15 @@ export default function Dashboard({ habits }) {
     const from = ymd(addDays(startOfMonth(now), -40))
     const to = ymd(endOfMonth(now))
     api.getLogs(from, to).then(setLogs).catch(() => {})
+    api.getTodos(ymd(now)).then(setTodos).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const todayStr = ymd(now)
+  const tomorrowStr = ymd(addDays(now, 1))
+  const openToday = todos.filter((t) => !t.completed && t.due_date === todayStr).length
+  const openTomorrow = todos.filter((t) => !t.completed && t.due_date === tomorrowStr).length
+  const openLater = todos.filter((t) => !t.completed && t.due_date > tomorrowStr).length
 
   const logMap = useMemo(() => buildLogMap(logs), [logs])
 
@@ -53,6 +61,16 @@ export default function Dashboard({ habits }) {
         <Stat label="Streak" value={`${stk}`} sub={stk === 1 ? 'day' : 'days'} color="gold" />
         <Stat label="% Better" value={`+${better.toFixed(1)}%`} sub="compounded" color="blue" />
       </div>
+
+      {/* To-Do summary */}
+      <Card>
+        <SectionTitle>To-Do — open items</SectionTitle>
+        <div className="grid grid-cols-3 gap-4">
+          <TodoTile label="Today" value={openToday} accent="gold" />
+          <TodoTile label="Tomorrow" value={openTomorrow} accent="blue" />
+          <TodoTile label="Later" value={openLater} />
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Trend chart */}
@@ -118,6 +136,16 @@ export default function Dashboard({ habits }) {
             })}
         </div>
       </Card>
+    </div>
+  )
+}
+
+function TodoTile({ label, value, accent }) {
+  const color = accent === 'blue' ? 'text-blue' : accent === 'gold' ? 'text-gold' : 'text-white'
+  return (
+    <div className="rounded-xl border border-line bg-panel2/40 p-4 text-center">
+      <div className={`text-3xl font-extrabold ${color}`}>{value}</div>
+      <div className="mt-0.5 text-xs muted">{label}{value === 1 ? ' · 1 task' : ` · ${value} tasks`}</div>
     </div>
   )
 }

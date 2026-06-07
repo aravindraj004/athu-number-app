@@ -2,7 +2,6 @@ const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
   { id: 'track', label: 'Track', icon: '▣' },
   { id: 'todo', label: 'To-Do', icon: '✓' },
-  { id: 'coach', label: 'Coach', icon: '◈' },
 ]
 
 export default function Nav({ active, onChange }) {
