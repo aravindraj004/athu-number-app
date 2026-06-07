@@ -62,3 +62,21 @@ export function isFuture(d) {
 export function isSameDay(a, b) {
   return ymd(a) === ymd(b)
 }
+
+// Parse a 'YYYY-MM-DD' string to a local Date (no UTC drift).
+export function parseYmd(s) {
+  return new Date(s + 'T00:00:00')
+}
+
+// Human label for a date string relative to today.
+export function friendlyDate(dateStr) {
+  const today = ymd(new Date())
+  const tomorrow = ymd(addDays(new Date(), 1))
+  if (dateStr === today) return 'Today'
+  if (dateStr === tomorrow) return 'Tomorrow'
+  return parseYmd(dateStr).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}

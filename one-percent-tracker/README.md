@@ -78,14 +78,16 @@ restarts and is reachable from any device.
   glow in the category color (gold = Non-Negotiables, blue = Growth &
   Development). **Family Time** logs minutes instead of a checkbox. Daily
   completion % sits above each day; category summary cards sit below.
-- **Wins** — a daily journal: 3 wins of today and 3 wins for tomorrow.
+- **To-Do** — a task list with **Today** and **Upcoming** sections. Each task has
+  a title and due date; a task appears in Today when its due date arrives, and any
+  unfinished task automatically rolls forward to the next day so it's never lost.
 - **Coach** — placeholder for future features.
 
 ## Data model (SQLite)
 
 - `habits` — name, category, type (`checkbox` | `time` | `number`), sort
 - `habit_logs` — habit_id, date, completed, minutes/value (unique per habit+date)
-- `daily_wins` — date, today_1..3, tomorrow_1..3
+- `todos` — id, title, due_date, completed
 
 ## Notes
 

@@ -142,6 +142,63 @@ app.put('/api/wins', h(async (req, res) => {
   res.json({ date, today, tomorrow })
 }))
 
+// ---------- To-Do list ----------
+const isYmd = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
+function serverToday() {
+  const d = new Date()
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+}
+
+app.get('/api/todos', h(async (req, res) => {
+  const today = isYmd(req.query.today) ? req.query.today : serverToday()
+  // Roll any overdue, still-incomplete task forward to today so it's never lost.
+  await db.execute({
+    sql: 'UPDATE todos SET due_date = ? WHERE due_date < ? AND completed = 0',
+    args: [today, today],
+  })
+  // Return today + future (past completed tasks stay done and drop off the list).
+  const r = await db.execute({
+    sql: 'SELECT * FROM todos WHERE due_date >= ? ORDER BY due_date, id',
+    args: [today],
+  })
+  res.json(r.rows)
+}))
+
+app.post('/api/todos', h(async (req, res) => {
+  const { title, due_date } = req.body || {}
+  if (!title || !title.trim()) return res.status(400).json({ error: 'title required' })
+  if (!isYmd(due_date)) return res.status(400).json({ error: 'valid due_date required' })
+  const ins = await db.execute({
+    sql: 'INSERT INTO todos (title, due_date, completed) VALUES (?, ?, 0)',
+    args: [title.trim(), due_date],
+  })
+  const row = await db.execute({ sql: 'SELECT * FROM todos WHERE id = ?', args: [Number(ins.lastInsertRowid)] })
+  res.json(row.rows[0])
+}))
+
+app.put('/api/todos/:id', h(async (req, res) => {
+  const id = Number(req.params.id)
+  const cur = await db.execute({ sql: 'SELECT * FROM todos WHERE id = ?', args: [id] })
+  const e = cur.rows[0]
+  if (!e) return res.status(404).json({ error: 'not found' })
+  const title = (req.body?.title ?? e.title).trim()
+  const due_date = req.body?.due_date ?? e.due_date
+  const completed = req.body?.completed != null ? (req.body.completed ? 1 : 0) : e.completed
+  if (!title) return res.status(400).json({ error: 'title required' })
+  if (!isYmd(due_date)) return res.status(400).json({ error: 'valid due_date required' })
+  await db.execute({
+    sql: 'UPDATE todos SET title = ?, due_date = ?, completed = ? WHERE id = ?',
+    args: [title, due_date, completed, id],
+  })
+  const row = await db.execute({ sql: 'SELECT * FROM todos WHERE id = ?', args: [id] })
+  res.json(row.rows[0])
+}))
+
+app.delete('/api/todos/:id', h(async (req, res) => {
+  await db.execute({ sql: 'DELETE FROM todos WHERE id = ?', args: [Number(req.params.id)] })
+  res.json({ ok: true })
+}))
+
 // ---------- Serve built client in production ----------
 const dist = path.join(__dirname, '..', 'dist')
 if (fs.existsSync(dist)) {

@@ -41,4 +41,23 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }).then(json),
+
+  getTodos: (today) => fetch(`/api/todos?today=${today}`).then(json),
+
+  createTodo: (todo) =>
+    fetch('/api/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(todo),
+    }).then(json),
+
+  updateTodo: (id, patch) =>
+    fetch(`/api/todos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    }).then(json),
+
+  deleteTodo: (id) =>
+    fetch(`/api/todos/${id}`, { method: 'DELETE' }).then(json),
 }

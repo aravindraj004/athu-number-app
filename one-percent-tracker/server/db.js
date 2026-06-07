@@ -55,6 +55,12 @@ export async function initDb() {
       tomorrow_2 TEXT DEFAULT '',
       tomorrow_3 TEXT DEFAULT ''
     );
+    CREATE TABLE IF NOT EXISTS todos (
+      id        INTEGER PRIMARY KEY AUTOINCREMENT,
+      title     TEXT    NOT NULL,
+      due_date  TEXT    NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0
+    );
   `)
 
   const r = await db.execute('SELECT COUNT(*) AS c FROM habits')

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Nav from './components/Nav.jsx'
 import Track from './pages/Track.jsx'
 import Dashboard from './pages/Dashboard.jsx'
-import Wins from './pages/Wins.jsx'
+import Todo from './pages/Todo.jsx'
 import Coach from './pages/Coach.jsx'
 import { api } from './api.js'
 
@@ -38,7 +38,7 @@ export default function App() {
           <>
             {tab === 'dashboard' && <Dashboard habits={habits} />}
             {tab === 'track' && <Track habits={habits} onHabitsChanged={refreshHabits} />}
-            {tab === 'wins' && <Wins />}
+            {tab === 'todo' && <Todo />}
             {tab === 'coach' && <Coach />}
           </>
         )}
